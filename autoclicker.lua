@@ -1,7 +1,6 @@
 --// MOBILE ROBLOX AUTO CLICKER
 --// Delta / Mobile
 --// 50-100 CPS
---// Does not intentionally control movement/camera
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -19,7 +18,7 @@ local clickPosition = nil
 
 local cps = 50
 
--- Click correction
+-- A little farther RIGHT and DOWN
 local OFFSET_X = 18
 local OFFSET_Y = 42
 
@@ -47,10 +46,6 @@ gui.Name = "MobileAutoClicker"
 gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
-
---==================================================
--- MAIN FRAME
---==================================================
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.fromOffset(200, 160)
@@ -168,7 +163,7 @@ toggleButton.Parent = frame
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 7)
 
 --==================================================
--- CPS BOX
+-- CPS
 --==================================================
 
 local cpsBox = Instance.new("TextBox")
@@ -191,7 +186,7 @@ cpsBox.Parent = frame
 Instance.new("UICorner", cpsBox).CornerRadius = UDim.new(0, 6)
 
 --==================================================
--- WHITE POSITION MARKER
+-- WHITE MARKER
 --==================================================
 
 local marker = Instance.new("Frame")
@@ -242,7 +237,6 @@ positionButton.Activated:Connect(function()
     toggleButton.Text = "START"
 
     settingPosition = true
-
     positionButton.Text = "TAP TARGET..."
 
     frame.Visible = false
@@ -262,7 +256,6 @@ UIS.InputBegan:Connect(function(input)
 
     if input.UserInputType ~= Enum.UserInputType.Touch
         and input.UserInputType ~= Enum.UserInputType.MouseButton1 then
-
         return
     end
 
@@ -316,11 +309,7 @@ toggleButton.Activated:Connect(function()
 
     enabled = not enabled
 
-    if enabled then
-        toggleButton.Text = "STOP"
-    else
-        toggleButton.Text = "START"
-    end
+    toggleButton.Text = enabled and "STOP" or "START"
 
 end)
 
@@ -352,14 +341,11 @@ end)
 
 local function performClick(x, y)
 
-    -- Move click farther right and down
+    -- Move actual click right/down
     x = x + OFFSET_X
     y = y + OFFSET_Y
 
-    -- Send a short tap only.
-    -- It does not hold the input, so normal
-    -- movement/camera touch controls remain usable.
-
+    -- TOUCH INPUT
     pcall(function()
 
         VIM:SendTouchEvent(
@@ -369,11 +355,36 @@ local function performClick(x, y)
             y
         )
 
+        task.wait()
+
         VIM:SendTouchEvent(
             1,
             Enum.UserInputState.End,
             x,
             y
+        )
+
+    end)
+
+    -- MOUSE FALLBACK
+    pcall(function()
+
+        VIM:SendMouseButtonEvent(
+            x,
+            y,
+            0,
+            true,
+            game,
+            0
+        )
+
+        VIM:SendMouseButtonEvent(
+            x,
+            y,
+            0,
+            false,
+            game,
+            0
         )
 
     end)
