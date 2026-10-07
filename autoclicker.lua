@@ -1,6 +1,7 @@
 --// MOBILE ROBLOX AUTO CLICKER
 --// Delta / Mobile
 --// 50-100 CPS
+--// Smaller click offset
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -18,9 +19,9 @@ local clickPosition = nil
 
 local cps = 50
 
--- A little farther RIGHT and DOWN
-local OFFSET_X = 18
-local OFFSET_Y = 42
+-- Smaller correction
+local OFFSET_X = 5
+local OFFSET_Y = 8
 
 local MIN_CPS = 50
 local MAX_CPS = 100
@@ -46,6 +47,10 @@ gui.Name = "MobileAutoClicker"
 gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
+
+--==================================================
+-- MAIN FRAME
+--==================================================
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.fromOffset(200, 160)
@@ -163,7 +168,7 @@ toggleButton.Parent = frame
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 7)
 
 --==================================================
--- CPS
+-- CPS BOX
 --==================================================
 
 local cpsBox = Instance.new("TextBox")
@@ -256,6 +261,7 @@ UIS.InputBegan:Connect(function(input)
 
     if input.UserInputType ~= Enum.UserInputType.Touch
         and input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+
         return
     end
 
@@ -309,7 +315,11 @@ toggleButton.Activated:Connect(function()
 
     enabled = not enabled
 
-    toggleButton.Text = enabled and "STOP" or "START"
+    if enabled then
+        toggleButton.Text = "STOP"
+    else
+        toggleButton.Text = "START"
+    end
 
 end)
 
@@ -336,37 +346,14 @@ cpsBox.FocusLost:Connect(function()
 end)
 
 --==================================================
--- CLICK FUNCTION
+-- CLICK
 --==================================================
 
 local function performClick(x, y)
 
-    -- Move actual click right/down
     x = x + OFFSET_X
     y = y + OFFSET_Y
 
-    -- TOUCH INPUT
-    pcall(function()
-
-        VIM:SendTouchEvent(
-            1,
-            Enum.UserInputState.Begin,
-            x,
-            y
-        )
-
-        task.wait()
-
-        VIM:SendTouchEvent(
-            1,
-            Enum.UserInputState.End,
-            x,
-            y
-        )
-
-    end)
-
-    -- MOUSE FALLBACK
     pcall(function()
 
         VIM:SendMouseButtonEvent(
