@@ -1,6 +1,5 @@
 --// MOBILE ROBLOX AUTO CLICKER
---// Delta / mobile
---// Set Position -> tap target -> Start
+--// Delta / Mobile
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -15,10 +14,18 @@ local player = Players.LocalPlayer
 local enabled = false
 local settingPosition = false
 local clickPosition = nil
-local cps = 10
+
+local cps = 50
+
+-- Click correction: right + down
+local OFFSET_X = 12
+local OFFSET_Y = 35
+
+local MIN_CPS = 50
+local MAX_CPS = 100
 
 --==================================================
--- CLEAN OLD GUI
+-- REMOVE OLD GUI
 --==================================================
 
 pcall(function()
@@ -49,7 +56,7 @@ frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
 --==================================================
--- TITLE / DRAG HANDLE
+-- TITLE / DRAG
 --==================================================
 
 local title = Instance.new("TextLabel")
@@ -60,10 +67,6 @@ title.TextColor3 = Color3.new(1, 1, 1)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
-
---==================================================
--- DRAGGING
---==================================================
 
 local dragging = false
 local dragStart
@@ -105,7 +108,7 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 --==================================================
--- SET POSITION BUTTON
+-- POSITION BUTTON
 --==================================================
 
 local positionButton = Instance.new("TextButton")
@@ -145,8 +148,8 @@ cpsBox.Size = UDim2.new(1, -20, 0, 25)
 cpsBox.Position = UDim2.fromOffset(10, 120)
 cpsBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 cpsBox.TextColor3 = Color3.new(1, 1, 1)
-cpsBox.PlaceholderText = "CPS"
-cpsBox.Text = "10"
+cpsBox.PlaceholderText = "CPS (50-100)"
+cpsBox.Text = "50"
 cpsBox.TextSize = 13
 cpsBox.Font = Enum.Font.Gotham
 cpsBox.ClearTextOnFocus = false
@@ -155,7 +158,7 @@ cpsBox.Parent = frame
 Instance.new("UICorner", cpsBox).CornerRadius = UDim.new(0, 6)
 
 --==================================================
--- SMALL POSITION MARKER
+-- POSITION MARKER
 --==================================================
 
 local marker = Instance.new("Frame")
@@ -171,7 +174,7 @@ marker.Parent = gui
 Instance.new("UICorner", marker).CornerRadius = UDim.new(1, 0)
 
 --==================================================
--- FULLSCREEN POSITION PICKER
+-- POSITION PICKER
 --==================================================
 
 local picker = Instance.new("TextButton")
@@ -193,27 +196,17 @@ positionButton.Activated:Connect(function()
         return
     end
 
-    settingPosition = true
     enabled = false
     toggleButton.Text = "START"
 
+    settingPosition = true
     positionButton.Text = "TAP TARGET..."
 
-    -- Hide GUI temporarily so it can't steal the target tap
     frame.Visible = false
     picker.Visible = true
 end)
 
-picker.Activated:Connect(function(inputPosition)
-    if not settingPosition then
-        return
-    end
-
-    -- Activated doesn't reliably provide the touch position,
-    -- so use the most recent touch position.
-end)
-
-UIS.InputBegan:Connect(function(input, processed)
+UIS.InputBegan:Connect(function(input)
     if not settingPosition then
         return
     end
@@ -228,7 +221,6 @@ UIS.InputBegan:Connect(function(input, processed)
     clickPosition = Vector2.new(pos.X, pos.Y)
     settingPosition = false
 
-    -- Tiny white marker
     marker.Position = UDim2.fromOffset(pos.X, pos.Y)
     marker.Visible = true
 
@@ -261,11 +253,7 @@ toggleButton.Activated:Connect(function()
 
     enabled = not enabled
 
-    if enabled then
-        toggleButton.Text = "STOP"
-    else
-        toggleButton.Text = "START"
-    end
+    toggleButton.Text = enabled and "STOP" or "START"
 end)
 
 --==================================================
@@ -276,19 +264,26 @@ cpsBox.FocusLost:Connect(function()
     local value = tonumber(cpsBox.Text)
 
     if not value then
-        value = 10
+        value = MIN_CPS
     end
 
-    cps = math.clamp(math.floor(value), 1, 30)
+    cps = math.clamp(
+        math.floor(value),
+        MIN_CPS,
+        MAX_CPS
+    )
+
     cpsBox.Text = tostring(cps)
 end)
 
 --==================================================
--- CLICK FUNCTION
+-- CLICK
 --==================================================
 
 local function performClick(x, y)
-    -- Try touch input first
+    x = x + OFFSET_X
+    y = y + OFFSET_Y
+
     pcall(function()
         VIM:SendTouchEvent(
             1,
@@ -305,7 +300,6 @@ local function performClick(x, y)
         )
     end)
 
-    -- Also try mouse input as a fallback
     pcall(function()
         VIM:SendMouseButtonEvent(
             x,
@@ -332,7 +326,7 @@ end
 --==================================================
 
 task.spawn(function()
-    while task.wait() do
+    while true do
         if enabled and clickPosition then
             performClick(
                 clickPosition.X,
